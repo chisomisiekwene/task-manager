@@ -1,117 +1,200 @@
-import { React, useState } from "react";
+import { React, useState, useContext, useEffect } from "react";
 import Header from "./header";
-import user from "./assets/userImg.svg";
+import users from "./assets/userImg.svg";
 import addbtn from "./assets/Plus Button.svg";
 import { BsFillTrashFill } from "react-icons/bs";
 import { BsFillCheckCircleFill } from "react-icons/bs";
 import { BsPencilSquare } from "react-icons/bs";
+import { auth, db } from "./config/firebaseConfig";
+import { useForm } from "react-hook-form";
+import {
+  collection,
+  addDoc,
+  setDoc,
+  serverTimestamp,
+  query,
+  onSnapshot,
+  updateDoc,
+  doc,
+  deleteDoc,
+} from "firebase/firestore";
+import { AuthContext } from "./context/Authcontext";
+import { createUserWithEmailAndPassword } from "firebase/auth";
+// import { onAuthStateChanged } from "firebase/auth"
+// import { auth } from "./config/firebaseConfig.js"
 
 function Todo() {
+  const { register, handleSubmit, reset, setValue } = useForm();
   const [createTodo, setCreateTodo] = useState("");
   const [selectedTodo, setSelectedTodo] = useState();
   const [Todo, setTodo] = useState([]);
-  const [completeTask, setCompleteTask] = useState("#000000");
   const [isEditing, setIsEditing] = useState(false);
 
-  const AddTask = (e) => {
-    e.preventDefault();
-    const TodoItem = createTodo;
+  useEffect(() => {
+    const q = query(collection(db, "todos"));
+    const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
+      let todoArray = [];
+      QuerySnapshot.forEach((doc) => {
+        todoArray.push({ ...doc.data(), id: doc.id });
+      });
+      setTodo(todoArray);
+    });
+    return () => unsubscribe();
+  }, []);
 
-    setTodo((prevTodo) => [...prevTodo, { id: Date.now(), todo: TodoItem }]);
-    setCreateTodo(" ");
+  const AddTask = async (data) => {
+    // try{
+    //   const todoRef = doc(db, "users", "todo");
+    //   await setDoc(todoRef, {
+    //     ...Todo,
+    //     timeStamp: serverTimestamp(),
+    //   });
+    // }catch(error){
+    //   console.log(error);
+    // }
+
+    // console.log(Todo);
+
+    // const TodoItem = createTodo;
+    // setTodo((prevTodo) => [...prevTodo, { id: Date.now(), todo: TodoItem }]);
+    // setCreateTodo(" ");
+    // if (createTodo === "") {
+    //   alert("Please enter a valid todo");
+    //   return;
+    // }
+    await addDoc(collection(db, "todos"), {
+      todo: data.todo,
+      completed: false,
+    });
+    // setCreateTodo("");
+    reset()
   };
-  console.log(Todo);
 
-  const deleteTodo = (indexToDelete) => {
-    // Create a new array that excludes the element to delete
-    const updatedTodo = Todo.filter((todos, index) => index !== indexToDelete);
-
-    // Update the state with the new array
-    setTodo(updatedTodo);
+  // completetodo
+  const toggleComplete = async (Todo) => {
+    await updateDoc(doc(db, "todos", Todo.id), {
+      completed: !Todo.completed,
+    });
   };
 
-  const CompleteTask = () => {
-    setCompleteTask("#50C2C9");
+  const deleteTodo = async (id) => {
+    await deleteDoc(doc(db, "todos", id));
   };
 
-  const handleEditTodo = (item) => {
+  // const handleEditTodo = async (Todo) => {
+  //   await updateDoc(doc(db, "todos", Todo.id), {
+  //     Todo: selectedTodo,
+  //   });
+  // };
+
+  const handleEditTodo = (todo) => {
     setIsEditing(true);
-    setSelectedTodo(item);
+    setSelectedTodo(todo);
   };
 
-  const UpdateTask = (updatedTodo) => {
-    setTodo((prevArray) =>
-      prevArray.map((details) => {
-        if (details.id === updatedTodo.id) {
-          return {
-            ...details,
-            todo: updatedTodo.todo,
-          };
-        }
-        return details;
-      })
-    );
-    setIsEditing(false)
-    setSelectedTodo([])
+  const UpdateTask = async (data) => {
+    await updateDoc(doc(db, "todos", selectedTodo.id), {
+      todo: data.todo,
+    });
+    setIsEditing(false);
+    setSelectedTodo([]);
+    reset()
   };
 
+  // const UpdateTask = (updatedTodo) => {
+  //   setTodo((prevArray) =>
+  //     prevArray.map((details) => {
+  //       if (details.id === updatedTodo.id) {
+  //         return {
+  //           ...details,
+  //           todo: updatedTodo.todo,
+  //         };
+  //       }
+  //       return details;
+  //     })
+  //   );
+  //   setIsEditing(false);
+  //   setSelectedTodo([]);
+  // };
+
+  useEffect(() => {
+    isEditing && setValue('todo', selectedTodo?.todo)
+  }, [isEditing])
+
+  const onSubmit = (data) => {
+    isEditing ? UpdateTask(data) : AddTask(data);
+  };
   return (
     <div className="bg-[#50C2C9]">
-      <Header />
-      <div className="flex flex-col gap-[20px] justify-center py-[50px]">
-        <div className="m-auto bg-white rounded-full md:w-[150px] md:h-[150px] w-[114px] h-[114px]">
-          <img src={user} alt="" className="w-full" />
-        </div>
-        <p className="text-center font-bold text-white text-[16px] md:text-[25px] text-[white]">
-          Welcome Arsalan Ahmed
-        </p>
-      </div>
-      <div className="bg-[#E6E6E6] p-[20px] flex flex-col gap-[20px] justify-center items-center">
-        <h1 className="text-[16px] md:text-[32px] font-bold">TODO LIST</h1>
+    <div className="bg-[#50C2C9] h-[500px]">
 
-        <div className="bg-white p-[30px] rounded-[21px] h-[300px] md:w-[60%] w-full flex flex-col gap-[30px]">
-          <div className="flex justify-between w-full md:gap-[20px] gap-[10px]">
+      <Header/>
+      {/* <div className="flex flex-col gap-[20px] justify-center py-[50px]">÷\ */}
+      <h1 className="text-[16px] md:text-[32px] text-center font-bold mt-[230px] text-white" >YOUR TASKS</h1>
+    </div>
+      <div className="bg-[#E6E6E6] p-[20px] flex flex-col gap-[20px] justify-center items-center">
+
+        <div className="bg-white md:p-[20px] p-[30px] rounded-[21px] h-[400px] md:w-[80%] w-full flex flex-col gap-[30px]">
+          <form
+            onSubmit={handleSubmit(onSubmit)}
+            className="flex justify-between w-full md:gap-[20px] gap-[10px]"
+          >
             <input
               type="text"
+              {...register("todo", { required: true })}
               placeholder="Enter your new task"
-              value={isEditing ? selectedTodo.todo : createTodo}
-              onChange={(e) =>
-                isEditing
-                  ? setSelectedTodo({
-                      id: selectedTodo.id,
-                      todo: e.target.value,
-                    })
-                  : setCreateTodo(e.target.value)
-              }
+              // value={isEditing && selectedTodo.todo}
+              // onChange={(e) =>
+              //   isEditing
+              //     ? setSelectedTodo({
+              //         id: selectedTodo.id,
+              //         todo: e.target.value,
+              //       })
+              //     : setCreateTodo(e.target.value)
+              // }
               className="p-[10px] border md:w-[85%] w-[70%]"
-              defaultValue=" "
+              // defaultValue=" "
+              required
             />
             <button
+              type="submit"
               className="text-center text-white md:text-[18px] text-[16px] font-bold md:w-[15%] w-[30%] border bg-[#50C2C9]"
               onClick={isEditing ? () => UpdateTask(selectedTodo) : AddTask}
             >
               {isEditing ? "UPDATE" : "ADD"}
             </button>
-          </div>
+          </form>
 
-          <div className="tasks overflow-auto flex flex-col gap-[30px] overflow-y-scroll">
+          <div className="tasks flex flex-col gap-[30px] overflow-auto">
             {Todo.map((item, index) => (
               <div
                 key={index}
                 className="taskItem flex gap-[20px] justify-between items-center"
               >
-                <p>{item?.todo}</p>
+                <div className="flex gap-[20px]">
+                  <input
+                    type="checkbox"
+                    onChange={() => toggleComplete(item)}
+                    checked={item.completed ? "checked" : ""}
+                  />
+                  <p
+                    onClick={() => toggleComplete(item)}
+                    className={item.completed ? "line-through" : " "}
+                  >
+                    {item?.todo}
+                  </p>
+                </div>
                 <div className="todo-icons flex gap-[10px]">
                   <BsFillTrashFill
                     className="fill-[#000000] cursor-pointer"
-                    onClick={() => deleteTodo(index)}
+                    onClick={() => deleteTodo(item.id)}
                   />
-                  <BsFillCheckCircleFill
+                  {/* <BsFillCheckCircleFill
                     className={`fill-[${completeTask}] cursor-pointer`}
                     onClick={CompleteTask}
-                  />
+                  /> */}
                   <BsPencilSquare
-                    className="fill-[#000000] cursor-pointer"
+                    className="fill-[#000000] cursor-pointer mr-[10px]"
                     onClick={() => handleEditTodo(item)}
                   />
                 </div>

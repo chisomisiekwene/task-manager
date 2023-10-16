@@ -1,39 +1,34 @@
 import React, { useState } from "react";
 import Header from "./header";
 import { Navigate, useNavigate } from "react-router-dom";
-import { createUserWithEmailAndPassword, onAuthStateChanged } from "firebase/auth"
-import { auth } from "./config/firebaseConfig.js"
+import { createUserWithEmailAndPassword } from "firebase/auth";
+import { auth } from "./config/firebaseConfig";
 
 function Register() {
     const navigate = useNavigate();
-
     const [registerEmail, setRegisterEmail] = useState("");
     const [registerPassword, setRegisterPassword] = useState("")
-    const[user, setUser] = useState([]);
-    const[signUp, setSignUp] = useState(false)
-
-    onAuthStateChanged(auth, (currentUser) => {
-      setUser(currentUser);
-    })
-
-    const signup = async(e) => {
-      e.preventDefault()
-      try{
-        const user = await createUserWithEmailAndPassword(
-          auth, 
-          registerEmail, 
-          registerPassword
-        );
-        console.log(user)
-        navigate('/login')
-      } catch (error){
-        console.log(error.message);
-      }
-
-    }
-
-   
+    const [emailExists, setEmailExists] = useState(false)
     
+
+const Handlesignup = (e) => {
+  e.preventDefault()
+  createUserWithEmailAndPassword(auth, registerEmail, registerPassword)
+  .then((userCredential) => {
+    alert('You have Signed up successfully')
+    const user = userCredential.user;
+    console.log(user)
+    navigate('/login')
+  })
+  .catch((error) => {
+    if (error.code === 'auth/email-already-in-use') {
+      setEmailExists(true)
+    } else {
+      console.log(error)
+    }
+  });
+}
+  
     
   return (
     <div>
@@ -48,7 +43,7 @@ function Register() {
           </div>
 
           {/* form */}
-          <form action="" className="w-full flex flex-col gap-[10px]">
+          <form onSubmit={Handlesignup} action="" className="w-full flex flex-col gap-[10px]">
               <input 
                 type="email" 
                 placeholder="Enter your email address" 
@@ -71,8 +66,11 @@ function Register() {
               />
               <br/>
 
+            {emailExists && alert('Email already exists')}
+
+
               <button 
-                    onClick={signup}
+                    type="submit"
                     className='font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px]'
                 >
                     Sign up
@@ -80,7 +78,6 @@ function Register() {
             
           </form>
           <p className="text-center">Already have an account? <span onClick={() => navigate('/login')}>Sign in</span></p>
-         {user?.email}
         </div>
 
       </div>
