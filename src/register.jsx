@@ -69,7 +69,7 @@ function Register() {
             onSubmit={Handlesignup}
             autoComplete="off"
             action=""
-            className="w-full flex flex-col gap-[10px]"
+            className="w-full flex flex-col"
           >
             <input
               type="text"
@@ -113,7 +113,7 @@ function Register() {
             <br />
             <button
               type="submit"
-              className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px] cursor-pointer"
+              className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[6px] rounded-lg cursor-pointer"
             >
               {status === LOADING ? (
                 <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
@@ -121,8 +121,7 @@ function Register() {
                 "Sign up"
               )}
             </button>
-          </form>
-          <p className="text-center">
+          <p className="text-center text-[12px] mt-2">
             Already have an account?{" "}
             <span
               onClick={() => navigate("/login")}
@@ -131,6 +130,7 @@ function Register() {
               Sign in
             </span>
           </p>
+          </form>
         </div>
       </div>
     </div>

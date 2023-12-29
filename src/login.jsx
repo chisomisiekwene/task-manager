@@ -61,16 +61,16 @@ function Login() {
       <Header />
       <div className="flex flex-col items-center justify-center w-full py-[30px]">
         <div className="flex flex-col items-center justify-center m-auto md:w-[800px] w-[80%] gap-[40px]">
+          <div className="w-full h-[100px] flex justify-center">
+            <img src={loginImg} alt="" className="w-full" />
+          </div>
           <h1 className="font-bold text-[20px] md:text-[40px] text-center">
             Welcome Back!
           </h1>
-          <div className="w-full h-[200px] flex justify-center">
-            <img src={loginImg} alt="" className="w-full" />
-          </div>
           <form
             autoComplete="off"
             onSubmit={Handlelogin}
-            className="w-full flex flex-col gap-[10px]"
+            className="w-full flex flex-col"
           >
             <input
               type="email"
@@ -99,15 +99,15 @@ function Login() {
               </div>
             </div>
             <br />
-            <button className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px]">
+            <div></div>
+            <button className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[6px] rounded-lg">
               {status === LOADING ? (
                 <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
               ) : (
                 "Sign in"
               )}
             </button>
-          </form>
-          <p>
+          <p className="text-[12px] text-center mt-2">
             Don't have an account?
             <span
               onClick={() => navigate("/signup")}
@@ -117,6 +117,7 @@ function Login() {
               Create one here
             </span>
           </p>
+          </form>
         </div>
       </div>
     </div>

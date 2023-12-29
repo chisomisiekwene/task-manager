@@ -12,7 +12,7 @@ import Login from "./login";
 import Todo from "./todo";
 import { AuthContext } from "./context/Authcontext";
 import { ToastContainer } from "react-toastify";
-import 'react-toastify/dist/ReactToastify.css';
+import "react-toastify/dist/ReactToastify.css";
 
 function App() {
   const { currentUser } = useContext(AuthContext);
@@ -26,16 +26,9 @@ function App() {
       <Router>
         <ToastContainer />
         <Routes>
-          <Route path="/login" element={<Login />} />
-          <Route
-            path="/"
-            element={
-              <RequireAuth>
-                <Home />
-              </RequireAuth>
-            }
-          />
+          <Route path="/" element={<Home />} />
           <Route path="/signup" element={<Register />} />
+          <Route path="/login" element={<Login />} />
           <Route
             path="/todo-page"
             element={

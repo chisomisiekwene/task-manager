@@ -170,7 +170,7 @@ function Todo() {
           </div>
           <div className="bg-[#E6E6E6] p-[20px] flex flex-col gap-[20px] justify-center items-center">
             <h1 className="text-[16px] md:text-[32px] font-bold">TODO LIST</h1>{" "}
-            <div className="bg-[#ffffff] md:p-[20px] p-[30px] rounded-[21px] h-[500px] md:w-[50%] w-full flex flex-col gap-[30px] overflow-scroll">
+            <div className="bg-[#ffffff] md:p-[20px] md:p-[30px] p-[20px] rounded-[21px] md:h-[500px] h-[400px] md:w-[50%] w-full flex flex-col gap-[30px] overflow-scroll">
               <form className="flex justify-between w-full md:gap-[20px] gap-[10px]">
                 <input
                   type="text"
@@ -182,7 +182,7 @@ function Todo() {
                 />
                 <button
                   type="submit"
-                  className="text-center text-white md:text-[18px] text-[16px] font-bold md:w-[15%] w-[30%] border bg-[#50C2C9] cursor-pointer"
+                  className="text-center text-white md:text-[18px] text-[13px] font-bold md:w-[15%] p-[5px] w-[30%] border bg-[#50C2C9] cursor-pointer"
                   onClick={isEdit ? editTask : addTask}
                 >
                   {status === LOADING ? (
