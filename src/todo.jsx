@@ -1,209 +1,249 @@
-import { React, useState, useContext, useEffect } from "react";
+
+import React, { useEffect, useState } from "react";
+import userEdit from "./assets/user-edit.svg";
 import Header from "./header";
 import users from "./assets/userImg.svg";
-import addbtn from "./assets/Plus Button.svg";
 import { BsFillTrashFill } from "react-icons/bs";
-import { BsFillCheckCircleFill } from "react-icons/bs";
 import { BsPencilSquare } from "react-icons/bs";
-import { auth, db } from "./config/firebaseConfig";
-import { useForm } from "react-hook-form";
+import { TbLogout2 } from "react-icons/tb";
 import {
-  collection,
   addDoc,
-  setDoc,
-  serverTimestamp,
-  query,
-  onSnapshot,
-  updateDoc,
+  collection,
   doc,
+  setDoc,
+  getDocs,
+  updateDoc,
   deleteDoc,
+  Firestore,
+  getFirestore,
 } from "firebase/firestore";
-import { AuthContext } from "./context/Authcontext";
-import { createUserWithEmailAndPassword } from "firebase/auth";
-// import { onAuthStateChanged } from "firebase/auth"
-// import { auth } from "./config/firebaseConfig.js"
+import { auth, db, statusQuery, storage } from "./config/firebaseConfig";
+import { toast, ToastContainer } from "react-toastify";
+import { FaSpinner } from "react-icons/fa";
+import { signOut } from "firebase/auth";
+import { useNavigate } from "react-router-dom";
+import { getDownloadURL, listAll, ref, uploadBytes } from "firebase/storage";
+import { v4 } from "uuid";
+
 
 function Todo() {
-  const { register, handleSubmit, reset, setValue } = useForm();
-  const [createTodo, setCreateTodo] = useState("");
-  const [selectedTodo, setSelectedTodo] = useState();
-  const [Todo, setTodo] = useState([]);
-  const [isEditing, setIsEditing] = useState(false);
+  const [todo, setTodo] = useState(" ");
+  const [todoLists, setTodoLists] = useState([]);
+  const [isEdit, setIsEdit] = useState(false);
+  const [todoId, setTodoId] = useState("");
+  const username = JSON.parse(localStorage.getItem("name"));
+  const [status, setStatus] = useState();
+  const { LOADING, SUCCESS, ERROR } = statusQuery;
+  const [img, setImg] = useState("")
+  const [imgUrl, setImgUrl] = useState([])
+
+
+  const navigate = useNavigate()
+
+  function handleTodo(event) {
+    setTodo(event.target.value);
+  }
+
+  const fetchData = async () => {
+    let list = [];
+    try {
+      const querySnapshot = await getDocs(collection(db, "todos"));
+      querySnapshot.forEach((doc) => {
+        list.push({ ...doc.data(), id: doc.id });
+        // list.push(doc.data());
+      });
+      setTodoLists(list);
+      console.log(todoLists, "todo");
+    } catch (err) {
+      console.log(err);
+    }
+  };
+  const userId = auth?.currentUser?.uid;
+  const addTask = async (e) => {
+    e.preventDefault();
+    setStatus(LOADING);
+    if (todo === "") {
+      toast.error("Please enter a todo");
+    } else {
+      const todos = { todo: todo, completed: false, uid: userId };
+      try {
+        await addDoc(collection(db, "todos"), todos).then((res) => {
+          setStatus(SUCCESS);
+          setTodo("");
+          toast.success("Todo added successfully", {
+            position: toast.POSITION.TOP_RIGHT,
+          });
+          console.log(res);
+          fetchData();
+        });
+      } catch (error) {
+        setStatus(ERROR)
+      toast.error(error.message)
+      }
+    }
+  };
+  const completeTask = async (todo) => {
+    try {
+      const todoRef = doc(db, "todos", todo?.id);
+      await updateDoc(todoRef, {
+        completed: !todo.completed,
+      }).then((res) => {
+        setStatus(SUCCESS);
+        toast.success("Completed", {
+          position: toast.POSITION.TOP_RIGHT,
+        });
+        fetchData();
+      });
+    } catch (error) {
+      setStatus(ERROR)
+      toast.error(error.message)
+    }
+  };
+
+  // delete data
+  const deleteTask = async (id) => {
+    await deleteDoc(doc(db, "todos", id)).then((res) => {
+      setStatus(SUCCESS);
+        toast.success("Todo deleted", {
+          position: toast.POSITION.TOP_RIGHT,
+        });
+      fetchData();
+    });
+  };
+
+  const handleEdit = (todo) => {
+    setIsEdit(true);
+    setTodo(todo.todo);
+    setTodoId(todo.id);
+  };
+
+  const editTask = async (e) => {
+    e.preventDefault();
+    setStatus(LOADING);
+    const todoRef = doc(db, "todos", todoId);
+    try {
+      await updateDoc(todoRef, {
+        todo: todo,
+      }).then((res) => {
+        setStatus(SUCCESS);
+        fetchData();
+        toast.success("Todo edited successfully");
+        setTodo("");
+        setIsEdit(false);
+      });
+    } catch (error) {
+      setStatus(ERROR)
+      toast.error(error.message)
+    }
+  };
 
   useEffect(() => {
-    const q = query(collection(db, "todos"));
-    const unsubscribe = onSnapshot(q, (QuerySnapshot) => {
-      let todoArray = [];
-      QuerySnapshot.forEach((doc) => {
-        todoArray.push({ ...doc.data(), id: doc.id });
-      });
-      setTodo(todoArray);
-    });
-    return () => unsubscribe();
+    fetchData();
   }, []);
 
-  const AddTask = async (data) => {
-    // try{
-    //   const todoRef = doc(db, "users", "todo");
-    //   await setDoc(todoRef, {
-    //     ...Todo,
-    //     timeStamp: serverTimestamp(),
-    //   });
-    // }catch(error){
-    //   console.log(error);
-    // }
-
-    // console.log(Todo);
-
-    // const TodoItem = createTodo;
-    // setTodo((prevTodo) => [...prevTodo, { id: Date.now(), todo: TodoItem }]);
-    // setCreateTodo(" ");
-    // if (createTodo === "") {
-    //   alert("Please enter a valid todo");
-    //   return;
-    // }
-    await addDoc(collection(db, "todos"), {
-      todo: data.todo,
-      completed: false,
-    });
-    // setCreateTodo("");
-    reset()
+  const logout = async() => {
+    try {
+      await signOut(auth);
+      navigate("/login")
+    } catch (err) {
+      console.log(err);
+    }
   };
 
-  // completetodo
-  const toggleComplete = async (Todo) => {
-    await updateDoc(doc(db, "todos", Todo.id), {
-      completed: !Todo.completed,
-    });
-  };
+ const capitalizedUserName = username.charAt(0).toUpperCase() + username.slice(1);
 
-  const deleteTodo = async (id) => {
-    await deleteDoc(doc(db, "todos", id));
-  };
-
-  // const handleEditTodo = async (Todo) => {
-  //   await updateDoc(doc(db, "todos", Todo.id), {
-  //     Todo: selectedTodo,
-  //   });
-  // };
-
-  const handleEditTodo = (todo) => {
-    setIsEditing(true);
-    setSelectedTodo(todo);
-  };
-
-  const UpdateTask = async (data) => {
-    await updateDoc(doc(db, "todos", selectedTodo.id), {
-      todo: data.todo,
-    });
-    setIsEditing(false);
-    setSelectedTodo([]);
-    reset()
-  };
-
-  // const UpdateTask = (updatedTodo) => {
-  //   setTodo((prevArray) =>
-  //     prevArray.map((details) => {
-  //       if (details.id === updatedTodo.id) {
-  //         return {
-  //           ...details,
-  //           todo: updatedTodo.todo,
-  //         };
-  //       }
-  //       return details;
-  //     })
-  //   );
-  //   setIsEditing(false);
-  //   setSelectedTodo([]);
-  // };
-
-  useEffect(() => {
-    isEditing && setValue('todo', selectedTodo?.todo)
-  }, [isEditing])
-
-  const onSubmit = (data) => {
-    isEditing ? UpdateTask(data) : AddTask(data);
-  };
   return (
-    <div className="bg-[#50C2C9]">
-    <div className="bg-[#50C2C9] h-[500px]">
-
-      <Header/>
-      {/* <div className="flex flex-col gap-[20px] justify-center py-[50px]">÷\ */}
-      <h1 className="text-[16px] md:text-[32px] text-center font-bold mt-[230px] text-white" >YOUR TASKS</h1>
-    </div>
-      <div className="bg-[#E6E6E6] p-[20px] flex flex-col gap-[20px] justify-center items-center">
-
-        <div className="bg-white md:p-[20px] p-[30px] rounded-[21px] h-[400px] md:w-[80%] w-full flex flex-col gap-[30px]">
-          <form
-            onSubmit={handleSubmit(onSubmit)}
-            className="flex justify-between w-full md:gap-[20px] gap-[10px]"
-          >
-            <input
-              type="text"
-              {...register("todo", { required: true })}
-              placeholder="Enter your new task"
-              // value={isEditing && selectedTodo.todo}
-              // onChange={(e) =>
-              //   isEditing
-              //     ? setSelectedTodo({
-              //         id: selectedTodo.id,
-              //         todo: e.target.value,
-              //       })
-              //     : setCreateTodo(e.target.value)
-              // }
-              className="p-[10px] border md:w-[85%] w-[70%]"
-              // defaultValue=" "
-              required
-            />
-            <button
-              type="submit"
-              className="text-center text-white md:text-[18px] text-[16px] font-bold md:w-[15%] w-[30%] border bg-[#50C2C9]"
-              onClick={isEditing ? () => UpdateTask(selectedTodo) : AddTask}
-            >
-              {isEditing ? "UPDATE" : "ADD"}
-            </button>
-          </form>
-
-          <div className="tasks flex flex-col gap-[30px] overflow-auto">
-            {Todo.map((item, index) => (
-              <div
-                key={index}
-                className="taskItem flex gap-[20px] justify-between items-center"
-              >
-                <div className="flex gap-[20px]">
-                  <input
-                    type="checkbox"
-                    onChange={() => toggleComplete(item)}
-                    checked={item.completed ? "checked" : ""}
-                  />
-                  <p
-                    onClick={() => toggleComplete(item)}
-                    className={item.completed ? "line-through" : " "}
-                  >
-                    {item?.todo}
-                  </p>
-                </div>
-                <div className="todo-icons flex gap-[10px]">
-                  <BsFillTrashFill
-                    className="fill-[#000000] cursor-pointer"
-                    onClick={() => deleteTodo(item.id)}
-                  />
-                  {/* <BsFillCheckCircleFill
-                    className={`fill-[${completeTask}] cursor-pointer`}
-                    onClick={CompleteTask}
-                  /> */}
-                  <BsPencilSquare
-                    className="fill-[#000000] cursor-pointer mr-[10px]"
-                    onClick={() => handleEditTodo(item)}
-                  />
-                </div>
+    <>
+      <div className="white">
+        <div className="bg-[#50C2C9]">
+          <Header />
+          <div className="flex flex-col gap-[20px] justify-center items-center py-[50px]">
+          <div className="relative  flex justify-center w-[fit-content]">
+              <div className="bg-color md:w-[214px] w-[96px] md:h-[214px] h-[96px] flex items-center justify-center md:rounded-[214px] rounded-[96px] border border-[#26D9C4] border-[7px] bg-[#C0D9BF]">
+                <p className="font-bold md:text-[100px] text-[50px]">{capitalizedUserName[0]}</p>
+             
               </div>
-            ))}
+            </div>
+            <p className="text-center font-bold text-[16px] md:text-[25px]">
+              Welcome {capitalizedUserName}
+            </p>
+          </div>
+          <div className="bg-[#E6E6E6] p-[20px] flex flex-col gap-[20px] justify-center items-center">
+            <h1 className="text-[16px] md:text-[32px] font-bold">TODO LIST</h1>{" "}
+            <div className="bg-[#ffffff] md:p-[20px] p-[30px] rounded-[21px] h-[500px] md:w-[50%] w-full flex flex-col gap-[30px] overflow-scroll">
+              <form className="flex justify-between w-full md:gap-[20px] gap-[10px]">
+                <input
+                  type="text"
+                  required
+                  placeholder="Enter your new task"
+                  className="p-[10px] border md:w-[85%] w-[70%]"
+                  value={todo}
+                  onChange={handleTodo}
+                />
+                <button
+                  type="submit"
+                  className="text-center text-white md:text-[18px] text-[16px] font-bold md:w-[15%] w-[30%] border bg-[#50C2C9]"
+                  onClick={isEdit ? editTask : addTask}
+                >
+                  {status === LOADING ? (
+                    <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
+                  ) : isEdit ? (
+                    "EDIT TASK"
+                  ) : (
+                    "ADD TASK"
+                  )}
+                </button>
+              </form>
+              <div className="tasks flex flex-col gap-[30px] overflow-auto">
+                {todoLists.map(
+                  (item, index) =>
+                    item.uid === userId && (
+                      <div
+                        key={index}
+                        className="taskItem flex gap-[20px] justify-between items-center"
+                      >
+                        <div className="flex gap-[20px]">
+                          <input
+                            type="checkbox"
+                            onChange={() => completeTask(item)}
+                            checked={item.completed ? "checked" : ""}
+                          />
+                          <p
+                            onClick={() => completeTask(item)}
+                            className={item.completed ? "line-through" : " "}
+                          >
+                            {item?.todo}
+                          </p>
+                        </div>
+                        <div className="todo-icons flex gap-[10px]">
+                          <BsFillTrashFill
+                            className="fill-[#000000] cursor-pointer"
+                            onClick={() => deleteTask(item.id)}
+                          />
+
+                          <BsPencilSquare
+                            className="fill-[#000000] cursor-pointer mr-[10px]"
+                            onClick={() => handleEdit(item)}
+                          />
+                        </div>
+                      </div>
+                    )
+                )}
+              </div>
+            </div>
+            <button
+              onClick={logout}
+              className=" text-red-500 flex items-center gap-[7px] bg-[#fff] px-[20px] py-[10px] rounded-lg"
+            >
+              <TbLogout2 siz={24} />
+              <p className="font-bold text-[10px] md:text-[24px] text-center cursor-pointer">
+                Log out
+              </p>
+            </button>
           </div>
         </div>
       </div>
-    </div>
+    </>
   );
 }
 

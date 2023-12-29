@@ -1,35 +1,53 @@
 import React, { useState } from "react";
 import Header from "./header";
-import { Navigate, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { createUserWithEmailAndPassword } from "firebase/auth";
-import { auth } from "./config/firebaseConfig";
+import { auth, db, statusQuery } from "./config/firebaseConfig";
+import { doc, setDoc } from "firebase/firestore";
+import { toast } from "react-toastify";
+import { FaSpinner } from "react-icons/fa";
+
 
 function Register() {
-    const navigate = useNavigate();
-    const [registerEmail, setRegisterEmail] = useState("");
-    const [registerPassword, setRegisterPassword] = useState("")
-    const [emailExists, setEmailExists] = useState(false)
-    
+  const navigate = useNavigate();
+  const [userName, setUserName] = useState("");
+  const [registerEmail, setRegisterEmail] = useState("");
+  const [registerPassword, setRegisterPassword] = useState("");
+  const [error, setError] = useState("");
+  const [status, setStatus] = useState();
+  const { LOADING, SUCCESS, ERROR } = statusQuery;
 
-const Handlesignup = (e) => {
-  e.preventDefault()
-  createUserWithEmailAndPassword(auth, registerEmail, registerPassword)
-  .then((userCredential) => {
-    alert('You have Signed up successfully')
-    const user = userCredential.user;
-    console.log(user)
-    navigate('/login')
-  })
-  .catch((error) => {
-    if (error.code === 'auth/email-already-in-use') {
-      setEmailExists(true)
-    } else {
-      console.log(error)
+  const Handlesignup = async (e) => {
+    e.preventDefault();
+    setStatus(LOADING);
+    try {
+      const res = await createUserWithEmailAndPassword(
+        auth,
+        registerEmail,
+        registerPassword
+      );
+      console.log(res, "res");
+      await setDoc(doc(db, "users", res?.user?.uid), {
+        name: userName,
+        email: registerEmail,
+      })
+        .then(() => {
+          // Signed up
+          setStatus(SUCCESS);
+          toast.success("Signed up successfully");
+          navigate("/login");
+          console.log(userName);
+        })
+        .catch((error) => {
+          setStatus(ERROR);
+          toast.error(error.message);
+          // ..
+        });
+    } catch (error) {
+      console.log(error);
     }
-  });
-}
-  
-    
+  };
+
   return (
     <div>
       <Header />
@@ -39,47 +57,66 @@ const Handlesignup = (e) => {
             <h1 className="font-bold text-[20px] md:text-[40px] text-center">
               Welcome Onboard
             </h1>
-            <p className="text-center text-[14px] md:text-[20px] text-[#6B7280]">Let’s help you to meet your Task!</p>
+            <p className="text-center text-[14px] md:text-[20px] text-[#6B7280]">
+              Lets us help you meet your Task!
+            </p>
           </div>
 
           {/* form */}
-          <form onSubmit={Handlesignup} action="" className="w-full flex flex-col gap-[10px]">
-              <input 
-                type="email" 
-                placeholder="Enter your email address" 
-                className="w-full p-[15px] rounded-[20px]"
-                onChange={(event) => {
-                  setRegisterEmail(event.target.value)
-                }}
-              /><br/>
-            
-              {/* <input type="tel" placeholder="Enter your Phone number" className="w-full p-[15px] rounded-[20px]"/><br/>
-            
-              <input type="text" placeholder="Enter your username" className="w-full p-[15px] rounded-[20px]"/><br/>
-             */}
-              <input type="password" 
-                placeholder="Enter your password" 
-                className="w-full p-[15px] rounded-[20px]"
-                onChange={(event) => {
-                  setRegisterPassword(event.target.value)
-                }}
-              />
-              <br/>
+          <form
+            onSubmit={Handlesignup}
+            autoComplete="off"
+            action=""
+            className="w-full flex flex-col gap-[10px]"
+          >
+            <input
+              type="text"
+              placeholder="Enter your username"
+              className="w-full p-[15px] rounded-[20px]"
+              required
+              onChange={(e) => setUserName(e.target.value)}
+              value={userName}
+            />
+            <br />
+            <input
+              type="email"
+              required
+              placeholder="Enter your email address"
+              className="w-full p-[15px] rounded-[20px]"
+              onChange={(event) => {
+                setRegisterEmail(event.target.value);
+              }}
+              value={registerEmail}
+            />
+            <br />
 
-            {emailExists && alert('Email already exists')}
-
-
-              <button 
-                    type="submit"
-                    className='font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px]'
-                >
-                    Sign up
-                </button>
-            
+            <input
+              type="password"
+              required
+              placeholder="Enter your password"
+              className="w-full p-[15px] rounded-[20px]"
+              onChange={(event) => {
+                setRegisterPassword(event.target.value);
+              }}
+              value={registerPassword}
+            />
+            <br />
+            <button
+              type="submit"
+              className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px]"
+            >
+              {status === LOADING ? (
+                <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
+              ) : (
+                "Sign up"
+              )}
+            </button>
           </form>
-          <p className="text-center">Already have an account? <span onClick={() => navigate('/login')}>Sign in</span></p>
+          <p className="text-center">
+            Already have an account?{" "}
+            <span onClick={() => navigate("/login")} className="text-[#50C2C9]">Sign in</span>
+          </p>
         </div>
-
       </div>
     </div>
   );
