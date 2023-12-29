@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from "react";
 import userEdit from "./assets/user-edit.svg";
 import Header from "./header";
@@ -6,6 +5,7 @@ import users from "./assets/userImg.svg";
 import { BsFillTrashFill } from "react-icons/bs";
 import { BsPencilSquare } from "react-icons/bs";
 import { TbLogout2 } from "react-icons/tb";
+import { BsCheckSquare } from "react-icons/bs";
 import {
   addDoc,
   collection,
@@ -16,6 +16,7 @@ import {
   deleteDoc,
   Firestore,
   getFirestore,
+  serverTimestamp,
 } from "firebase/firestore";
 import { auth, db, statusQuery, storage } from "./config/firebaseConfig";
 import { toast, ToastContainer } from "react-toastify";
@@ -25,7 +26,6 @@ import { useNavigate } from "react-router-dom";
 import { getDownloadURL, listAll, ref, uploadBytes } from "firebase/storage";
 import { v4 } from "uuid";
 
-
 function Todo() {
   const [todo, setTodo] = useState(" ");
   const [todoLists, setTodoLists] = useState([]);
@@ -34,11 +34,10 @@ function Todo() {
   const username = JSON.parse(localStorage.getItem("name"));
   const [status, setStatus] = useState();
   const { LOADING, SUCCESS, ERROR } = statusQuery;
-  const [img, setImg] = useState("")
-  const [imgUrl, setImgUrl] = useState([])
+  const [img, setImg] = useState("");
+  const [imgUrl, setImgUrl] = useState([]);
 
-
-  const navigate = useNavigate()
+  const navigate = useNavigate();
 
   function handleTodo(event) {
     setTodo(event.target.value);
@@ -53,9 +52,9 @@ function Todo() {
         // list.push(doc.data());
       });
       setTodoLists(list);
-      console.log(todoLists, "todo");
-    } catch (err) {
-      console.log(err);
+    } catch (error) {
+      setStatus(ERROR);
+      toast.error(error.message);
     }
   };
   const userId = auth?.currentUser?.uid;
@@ -63,10 +62,16 @@ function Todo() {
     e.preventDefault();
     setStatus(LOADING);
     if (todo === " ") {
-      setStatus(ERROR)
+      setStatus(ERROR);
       toast.error("Please enter a todo");
     } else {
-      const todos = { todo: todo, completed: false, uid: userId };
+      const todos = {
+        todo: todo,
+        completed: false,
+        uid: userId,
+        createdAt: serverTimestamp(),
+      };
+
       try {
         await addDoc(collection(db, "todos"), todos).then((res) => {
           setStatus(SUCCESS);
@@ -74,12 +79,11 @@ function Todo() {
           toast.success("Todo added successfully", {
             position: toast.POSITION.TOP_RIGHT,
           });
-          console.log(res);
           fetchData();
         });
       } catch (error) {
-        setStatus(ERROR)
-      toast.error(error.message)
+        setStatus(ERROR);
+        toast.error(error.message);
       }
     }
   };
@@ -90,38 +94,36 @@ function Todo() {
         completed: !todo.completed,
       }).then((res) => {
         setStatus(SUCCESS);
-        toast.success("Completed", {
+        toast.success("Successful", {
           position: toast.POSITION.TOP_RIGHT,
         });
         fetchData();
       });
     } catch (error) {
-      setStatus(ERROR)
-      toast.error(error.message)
+      setStatus(ERROR);
+      toast.error(error.message);
     }
   };
 
   // delete data
   const deleteTask = async (id) => {
-    const isConfirmed = window.confirm('Are you sure you want to delete?');
+    const isConfirmed = window.confirm("Are you sure you want to delete?");
     if (isConfirmed) {
       try {
         await deleteDoc(doc(db, "todos", id)).then((res) => {
           setStatus(SUCCESS);
-            toast.success("Todo deleted", {
-              position: toast.POSITION.TOP_RIGHT,
-            });
+          toast.success("Todo deleted", {
+            position: toast.POSITION.TOP_RIGHT,
+          });
           fetchData();
         });
-        
       } catch (error) {
-        setStatus(ERROR)
-        toast.error(error.message)
+        setStatus(ERROR);
+        toast.error(error.message);
       }
     } else {
-      console.log('Canceled deletion');
     }
-  }
+  };
 
   const handleEdit = (todo) => {
     setIsEdit(true);
@@ -144,8 +146,8 @@ function Todo() {
         setIsEdit(false);
       });
     } catch (error) {
-      setStatus(ERROR)
-      toast.error(error.message)
+      setStatus(ERROR);
+      toast.error(error.message);
     }
   };
 
@@ -153,16 +155,27 @@ function Todo() {
     fetchData();
   }, []);
 
-  const logout = async() => {
+  const logout = async () => {
     try {
       await signOut(auth);
-      navigate("/login")
-    } catch (err) {
-      console.log(err);
+      navigate("/login");
+      localStorage.clear();
+    } catch (error) {
+      setStatus(ERROR);
+      toast.error(error.message);
     }
   };
 
- const capitalizedUserName = username?.charAt(0).toUpperCase() + username?.slice(1);
+  const formattedDate = (createdAt) => {
+    const dateObject = new Date(
+      createdAt?.seconds * 1000 + createdAt?.nanoseconds / 1e6
+    );
+    const formattedDate = dateObject.toLocaleString();
+    return formattedDate;
+  };
+
+  const capitalizedUserName =
+    username?.charAt(0).toUpperCase() + username?.slice(1);
 
   return (
     <>
@@ -170,10 +183,11 @@ function Todo() {
         <div className="bg-[#50C2C9]">
           <Header />
           <div className="flex flex-col gap-[20px] justify-center items-center py-[50px]">
-          <div className="relative  flex justify-center w-[fit-content]">
+            <div className="relative  flex justify-center w-[fit-content]">
               <div className="bg-color md:w-[214px] w-[96px] md:h-[214px] h-[96px] flex items-center justify-center md:rounded-[214px] rounded-[96px] border border-[#26D9C4] border-[7px] bg-[#C0D9BF]">
-                <p className="font-bold md:text-[100px] text-[50px]">{capitalizedUserName[0]}</p>
-             
+                <p className="font-bold md:text-[100px] text-[50px]">
+                  {capitalizedUserName[0]}
+                </p>
               </div>
             </div>
             <p className="text-center font-bold text-[16px] md:text-[25px]">
@@ -210,34 +224,35 @@ function Todo() {
                 {todoLists.map(
                   (item, index) =>
                     item.uid === userId && (
-                      <div
-                        key={index}
-                        className="taskItem flex gap-[20px] justify-between items-center"
-                      >
-                        <div className="flex gap-[20px] cursor-pointer">
-                          <input
-                            type="checkbox"
-                            onChange={() => completeTask(item)}
-                            checked={item.completed ? "checked" : ""}
-                          />
-                          <p
-                            onClick={() => completeTask(item)}
-                            className={item.completed ? "line-through" : " "}
-                          >
-                            {item?.todo}
-                          </p>
-                        </div>
-                        <div className="todo-icons flex gap-[10px]">
-                          <BsFillTrashFill
-                            className="fill-[#000000] cursor-pointer"
-                            onClick={() => deleteTask(item.id)}
-                          />
+                      <div key={index} className="taskItem flex flex-col">
+                        <div className="flex gap-[20px] justify-between items-center">
+                          <div className="flex gap-[20px] cursor-pointer">
+                            <p
+                              onClick={() => completeTask(item)}
+                              className={item.completed ? "line-through" : " "}
+                            >
+                              {item?.todo}
+                            </p>
+                          </div>
+                          <div className="todo-icons flex gap-[10px]">
+                            <BsCheckSquare
+                              onClick={() => completeTask(item)}
+                              className="cursor-pointer"
+                            />
+                            <BsFillTrashFill
+                              className="fill-[#000000] cursor-pointer"
+                              onClick={() => deleteTask(item.id)}
+                            />
 
-                          <BsPencilSquare
-                            className="fill-[#000000] cursor-pointer mr-[10px]"
-                            onClick={() => handleEdit(item)}
-                          />
+                            <BsPencilSquare
+                              className="fill-[#000000] cursor-pointer mr-[10px]"
+                              onClick={() => handleEdit(item)}
+                            />
+                          </div>
                         </div>
+                        <span className="text-[10px]">
+                          {formattedDate(item?.createdAt) || "N?A"}
+                        </span>
                       </div>
                     )
                 )}

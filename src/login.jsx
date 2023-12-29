@@ -24,15 +24,15 @@ function Login() {
   const { dispatch } = useContext(AuthContext);
   const userId = auth?.currentUser?.uid;
 
-  const fetchUser = async () => {
-    const docRef = doc(db, "users", userId);
+  const fetchUser = async (uid) => {
+    const docRef = doc(db, "users", uid);
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
       const userDisplayName = docSnap.data().name;
       localStorage.setItem("name", JSON.stringify(userDisplayName));
     } else {
-      console.log("No such document!");
+      
     }
   };
 
@@ -46,9 +46,8 @@ function Login() {
         toast.success("Logged in successfully");
         const user = userCredential.user;
         dispatch({ type: "LOGIN", payload: user });
+        fetchUser(user.uid);
         navigate("/todo-page");
-        fetchUser();
-        console.log(user);
       })
       .catch((error) => {
         setStatus(ERROR);
