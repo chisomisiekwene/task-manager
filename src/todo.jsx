@@ -62,7 +62,8 @@ function Todo() {
   const addTask = async (e) => {
     e.preventDefault();
     setStatus(LOADING);
-    if (todo === "") {
+    if (todo === " ") {
+      setStatus(ERROR)
       toast.error("Please enter a todo");
     } else {
       const todos = { todo: todo, completed: false, uid: userId };
@@ -102,14 +103,25 @@ function Todo() {
 
   // delete data
   const deleteTask = async (id) => {
-    await deleteDoc(doc(db, "todos", id)).then((res) => {
-      setStatus(SUCCESS);
-        toast.success("Todo deleted", {
-          position: toast.POSITION.TOP_RIGHT,
+    const isConfirmed = window.confirm('Are you sure you want to delete?');
+    if (isConfirmed) {
+      try {
+        await deleteDoc(doc(db, "todos", id)).then((res) => {
+          setStatus(SUCCESS);
+            toast.success("Todo deleted", {
+              position: toast.POSITION.TOP_RIGHT,
+            });
+          fetchData();
         });
-      fetchData();
-    });
-  };
+        
+      } catch (error) {
+        setStatus(ERROR)
+        toast.error(error.message)
+      }
+    } else {
+      console.log('Canceled deletion');
+    }
+  }
 
   const handleEdit = (todo) => {
     setIsEdit(true);
