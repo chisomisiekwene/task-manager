@@ -9,6 +9,7 @@ import { AuthContext } from "./context/Authcontext";
 import { collection, doc, getDoc } from "firebase/firestore";
 import { FaSpinner } from "react-icons/fa";
 import { toast } from "react-toastify";
+import { BsEyeSlash } from "react-icons/bs";
 
 function Login() {
   const navigate = useNavigate();
@@ -16,9 +17,9 @@ function Login() {
   const [loginEmail, setLoginEmail] = useState("");
   const [loginPassword, setLoginPassword] = useState("");
   const [allUsers, setAllUsers] = useState([]);
-  const[status, setStatus] = useState()
-  const{LOADING, SUCCESS, ERROR} = statusQuery
-  
+  const [status, setStatus] = useState();
+  const [showPassword, setShowPassword] = useState();
+  const { LOADING, SUCCESS, ERROR } = statusQuery;
 
   const { dispatch } = useContext(AuthContext);
   const userId = auth?.currentUser?.uid;
@@ -28,35 +29,32 @@ function Login() {
     const docSnap = await getDoc(docRef);
 
     if (docSnap.exists()) {
-     const userDisplayName = docSnap.data().name
-     localStorage.setItem("name", JSON.stringify(userDisplayName))
+      const userDisplayName = docSnap.data().name;
+      localStorage.setItem("name", JSON.stringify(userDisplayName));
     } else {
       console.log("No such document!");
     }
   };
 
   const Handlelogin = (e) => {
-    setStatus(LOADING)
+    setStatus(LOADING);
     e.preventDefault();
     signInWithEmailAndPassword(auth, loginEmail, loginPassword)
       .then((userCredential) => {
         // Signed in
-        setStatus(SUCCESS)
-        toast.success("Logged in successfully")
+        setStatus(SUCCESS);
+        toast.success("Logged in successfully");
         const user = userCredential.user;
         dispatch({ type: "LOGIN", payload: user });
-        navigate("/todo-page")
+        navigate("/todo-page");
         fetchUser();
         console.log(user);
       })
       .catch((error) => {
-        setStatus(ERROR)
-        toast.error(error.message)
+        setStatus(ERROR);
+        toast.error(error.message);
       });
-   
   };
-
-  
 
   return (
     <div>
@@ -84,17 +82,25 @@ function Login() {
               }}
             />
             <br />
-            <input
-              type="password"
-              placeholder="Enter your password"
-              className="w-full p-[15px] rounded-[20px]"
-              onChange={(event) => {
-                setLoginPassword(event.target.value);
-              }}
-            />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder="Enter your password"
+                className="w-full p-[15px] rounded-[20px]"
+                onChange={(event) => {
+                  setLoginPassword(event.target.value);
+                }}
+              />
+              <div
+                onClick={() => setShowPassword(!showPassword)}
+                className=" cursor-pointer absolute right-2 bottom-[50%] translate-y-[50%]"
+              >
+                <BsEyeSlash className="w-[30px]" />
+              </div>
+            </div>
             <br />
             <button className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px]">
-            {status === LOADING ? (
+              {status === LOADING ? (
                 <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
               ) : (
                 "Sign in"
@@ -103,7 +109,13 @@ function Login() {
           </form>
           <p>
             Don't have an account?
-            <span onClick={() => navigate("/signup")} className="text-[#50C2C9]"> Create one here</span>
+            <span
+              onClick={() => navigate("/signup")}
+              className="text-[#50C2C9] cursor-pointer"
+            >
+              {" "}
+              Create one here
+            </span>
           </p>
         </div>
       </div>

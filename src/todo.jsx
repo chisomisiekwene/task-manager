@@ -150,7 +150,7 @@ function Todo() {
     }
   };
 
- const capitalizedUserName = username.charAt(0).toUpperCase() + username.slice(1);
+ const capitalizedUserName = username?.charAt(0).toUpperCase() + username?.slice(1);
 
   return (
     <>
@@ -182,7 +182,7 @@ function Todo() {
                 />
                 <button
                   type="submit"
-                  className="text-center text-white md:text-[18px] text-[16px] font-bold md:w-[15%] w-[30%] border bg-[#50C2C9]"
+                  className="text-center text-white md:text-[18px] text-[16px] font-bold md:w-[15%] w-[30%] border bg-[#50C2C9] cursor-pointer"
                   onClick={isEdit ? editTask : addTask}
                 >
                   {status === LOADING ? (
@@ -202,7 +202,7 @@ function Todo() {
                         key={index}
                         className="taskItem flex gap-[20px] justify-between items-center"
                       >
-                        <div className="flex gap-[20px]">
+                        <div className="flex gap-[20px] cursor-pointer">
                           <input
                             type="checkbox"
                             onChange={() => completeTask(item)}
@@ -233,7 +233,7 @@ function Todo() {
             </div>
             <button
               onClick={logout}
-              className=" text-red-500 flex items-center gap-[7px] bg-[#fff] px-[20px] py-[10px] rounded-lg"
+              className=" text-red-500 flex items-center gap-[7px] bg-[#fff] px-[20px] py-[10px] rounded-lg cursor-pointer"
             >
               <TbLogout2 siz={24} />
               <p className="font-bold text-[10px] md:text-[24px] text-center cursor-pointer">

@@ -6,7 +6,7 @@ import { auth, db, statusQuery } from "./config/firebaseConfig";
 import { doc, setDoc } from "firebase/firestore";
 import { toast } from "react-toastify";
 import { FaSpinner } from "react-icons/fa";
-
+import { BsEyeSlash } from "react-icons/bs";
 
 function Register() {
   const navigate = useNavigate();
@@ -16,6 +16,8 @@ function Register() {
   const [error, setError] = useState("");
   const [status, setStatus] = useState();
   const { LOADING, SUCCESS, ERROR } = statusQuery;
+  const [showPassword, setShowPassword] = useState();
+
 
   const Handlesignup = async (e) => {
     e.preventDefault();
@@ -89,21 +91,29 @@ function Register() {
               value={registerEmail}
             />
             <br />
+            <div className="relative">
+              <input
+                type={showPassword ? "text" : "password"}
+                required
+                placeholder="Enter your password"
+                className="w-full p-[15px] rounded-[20px]"
+                onChange={(event) => {
+                  setRegisterPassword(event.target.value);
+                }}
+                value={registerPassword}
+              />
+              <div
+                onClick={() => setShowPassword(!showPassword)}
+                className="cursor-pointer absolute right-2 bottom-[50%] translate-y-[50%]"
+              >
+                <BsEyeSlash className="w-[30px]" />
+              </div>
+            </div>
 
-            <input
-              type="password"
-              required
-              placeholder="Enter your password"
-              className="w-full p-[15px] rounded-[20px]"
-              onChange={(event) => {
-                setRegisterPassword(event.target.value);
-              }}
-              value={registerPassword}
-            />
             <br />
             <button
               type="submit"
-              className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px]"
+              className="font-bold text-white text-[24px] bg-[#50C2C9] w-full p-[10px] cursor-pointer"
             >
               {status === LOADING ? (
                 <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
@@ -114,7 +124,12 @@ function Register() {
           </form>
           <p className="text-center">
             Already have an account?{" "}
-            <span onClick={() => navigate("/login")} className="text-[#50C2C9]">Sign in</span>
+            <span
+              onClick={() => navigate("/login")}
+              className="text-[#50C2C9] cursor-pointer"
+            >
+              Sign in
+            </span>
           </p>
         </div>
       </div>
