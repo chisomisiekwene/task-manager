@@ -2,7 +2,7 @@ import { FaSpinner } from "react-icons/fa";
 import { statusQuery } from "./config/firebaseConfig";
 
 export const PopAdd = (props) => {
-  const { setPopUp, loa, todo, handleTodo, handleDate, handleTime, time, date, status, isEdit, editTask, addTask } = props;
+  const { setPopUp, todo, handleTodo, handleDate, handleTime, time, date, status, isEdit, editTask, addTask } = props;
   const { LOADING, SUCCESS, ERROR } = statusQuery;
 
   return (
@@ -40,19 +40,30 @@ export const PopAdd = (props) => {
             />
           </div>
         </form>
-        <button
-          type="submit"
-          className="text-center text-white md:text-[18px] text-[13px] font-bold md:w-[15%] p-[5px] w-[30%] border bg-[#50C2C9] cursor-pointer"
-          onClick={isEdit ? editTask : addTask}
-        >
-          {status === LOADING ? (
-            <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
-          ) : isEdit ? (
-            "EDIT TASK"
-          ) : (
-            "ADD TASK"
-          )}
-        </button>
+        <div className="w-[100%] m-auto">
+          <button
+            type="submit"
+            className="text-center text-white md:text-[18px] text-[13px] font-bold md:w-[15%] p-[5px] w-[30%] border bg-[#50C2C9] cursor-pointer"
+            onClick={isEdit ? editTask : addTask}
+          >
+            {status === LOADING ? (
+              <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
+            ) : isEdit ? (
+              "EDIT TASK"
+            ) : (
+              "ADD TASK"
+            )}
+          </button>
+          <button
+            type="submit"
+            className="text-center text-white md:text-[18px] text-[13px] font-bold md:w-[15%] p-[5px] w-[30%] border bg-gray-500 cursor-pointer"
+            onClick={() => setPopUp(false)}
+          >
+            CLOSE
+          </button>
+
+        </div>
+
       </div>
     </div>
   );

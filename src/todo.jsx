@@ -29,8 +29,8 @@ import { PopAdd } from "./popAdd";
 
 function Todo() {
   const [todo, setTodo] = useState(" ");
-  const[time, setTime] =useState("");
-  const[date, setDate] =useState("");
+  const [time, setTime] = useState("");
+  const [date, setDate] = useState("");
   const [todoLists, setTodoLists] = useState([]);
   const [isEdit, setIsEdit] = useState(false);
   const [todoId, setTodoId] = useState("");
@@ -80,14 +80,16 @@ function Todo() {
         completed: false,
         uid: userId,
         createdAt: serverTimestamp(),
-        time : time,
-        date : date
+        time: time,
+        date: date
       };
 
       try {
         await addDoc(collection(db, "todos"), todos).then((res) => {
           setStatus(SUCCESS);
           setTodo("");
+          setTime("");
+          setDate("")
           setPopUp(false)
           toast.success("Todo added successfully", {
             position: toast.POSITION.TOP_RIGHT,
@@ -101,7 +103,7 @@ function Todo() {
     }
   };
 
-  
+
   const completeTask = async (todo) => {
     try {
       const todoRef = doc(db, "todos", todo?.id);
@@ -141,9 +143,12 @@ function Todo() {
   };
 
   const handleEdit = (todo) => {
+    setPopUp(true)
     setIsEdit(true);
     setTodo(todo.todo);
     setTodoId(todo.id);
+    setTime(todo.time);
+    setDate(todo.date)
   };
 
   const editTask = async (e) => {
@@ -153,11 +158,16 @@ function Todo() {
     try {
       await updateDoc(todoRef, {
         todo: todo,
+        time: time,
+        date: date
       }).then((res) => {
         setStatus(SUCCESS);
         fetchData();
         toast.success("Todo edited successfully");
         setTodo("");
+        setTime("");
+        setDate("")
+        setPopUp(false)
         setIsEdit(false);
       });
     } catch (error) {
@@ -211,31 +221,18 @@ function Todo() {
           </div>
           <div className="bg-[#E6E6E6] p-[20px] flex flex-col gap-[20px] justify-center items-center">
             <h1 className="text-[16px] md:text-[32px] font-bold">TODO LIST</h1>{" "}
+            <div className="flex justify-center md:w-[50%] w-[100%]">
+              <button
+                type="submit"
+                className="text-center text-white md:text-[18px] text-[13px] font-bold md:w-[30%] p-[5px] w-[30%] border bg-[#50C2C9] cursor-pointer"
+                onClick={() => setPopUp(true)}
+              >
+                ADD TASK
+              </button>
+              </div>
+              
             <div className="bg-[#ffffff] md:p-[20px] md:p-[30px] p-[20px] rounded-[21px] md:h-[500px] h-[400px] md:w-[50%] w-full flex flex-col gap-[30px] overflow-scroll">
-              {/* <form className="flex justify-between w-full md:gap-[20px] gap-[10px]">
-                <input
-                  type="text"
-                  required
-                  placeholder="Enter your new task"
-                  className="p-[10px] border md:w-[85%] w-[70%]"
-                  value={todo}
-                  onChange={handleTodo}
-                />
-              </form> */}
-                <button
-                  type="submit"
-                  className="text-center text-white md:text-[18px] text-[13px] font-bold md:w-[15%] p-[5px] w-[30%] border bg-[#50C2C9] cursor-pointer"
-                  onClick={() => setPopUp(true)}
-                >
-                  ADD TASK
-                  {/* {status === LOADING ? (
-                    <FaSpinner className="mx-auto md-text-[20px] animate-spin" />
-                  ) : isEdit ? (
-                    "EDIT TASK"
-                  ) : (
-                    "ADD TASK"
-                  )} */}
-                </button>
+              
               <div className="tasks flex flex-col gap-[30px] overflow-auto">
                 {todoLists.map(
                   (item, index) =>
@@ -266,12 +263,15 @@ function Todo() {
                             />
                           </div>
                         </div>
-                        <span className="text-[10px]">
-                          {item?.date}
-                        </span>
-                        <span className="text-[10px]">
-                          {item?.time}
-                        </span>
+                        <div className="flex gap-[10px]">
+                          <span className="text-[10px]">
+                            {item?.date}
+                          </span>
+                          <span className="text-[10px]">
+                            {item?.time}
+                          </span>
+                        </div>
+
                       </div>
                     )
                 )}
@@ -290,20 +290,20 @@ function Todo() {
         </div>
       </div>
       {popUp && (
-				<PopAdd
-        setPopUp = {setPopUp}
-        todo = {todo}
-         handleTodo = {handleTodo} 
-         handleDate = {handleDate}
-        handleTime = {handleTime} 
-        time = {time} 
-        date = {date} 
-        status = {status} 
-        isEdit = {isEdit} 
-        editTask = {editTask} 
-        addTask = {addTask}
-				/>
-			)}
+        <PopAdd
+          setPopUp={setPopUp}
+          todo={todo}
+          handleTodo={handleTodo}
+          handleDate={handleDate}
+          handleTime={handleTime}
+          time={time}
+          date={date}
+          status={status}
+          isEdit={isEdit}
+          editTask={editTask}
+          addTask={addTask}
+        />
+      )}
     </>
   );
 }
